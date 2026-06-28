@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0f0700"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>ChefVoice — Your Talking Kitchen Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0f0700;--surface:#1c1005;--card:#261608;
+--flame:#ff6b1a;--gold:#e8a832;--cream:#f5e6c8;
+--muted:#8a7560;--green:#4caf7d;--red:#e05555;--r:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;overflow:hidden}
+.screen{display:none;flex-direction:column;height:100vh}
+.screen.active{display:flex}
+#welcome{align-items:center;justify-content:center;gap:18px;padding:28px 22px;text-align:center;overflow-y:auto;background:radial-gradient(ellipse at 50% 30%,#3d1f00 0%,#0f0700 70%)}
+.flame-icon{font-size:64px;animation:flicker 2s ease-in-out infinite alternate}
+@keyframes flicker{0%{transform:scale(1) rotate(-2deg);filter:drop-shadow(0 0 12px #ff6b1a88)}100%{transform:scale(1.08) rotate(2deg);filter:drop-shadow(0 0 28px #ff6b1acc)}}
+.welcome-title{font-family:'Playfair Display',serif;font-size:38px;color:var(--flame)}
+.welcome-sub{font-size:14px;color:var(--muted);line-height:1.6;max-width:280px}
+.welcome-sub strong{color:var(--cream)}
+.field{width:100%;max-width:320px;text-align:left}
+.field-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.sel{width:100%;background:var(--card);border:1px solid #3a2010;border-radius:12px;padding:11px 14px;color:var(--cream);font-size:14px;font-family:'Inter',sans-serif;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a7560' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.sel option{background:#1c1005}
+.start-btn{background:var(--flame);color:#fff;border:none;border-radius:50px;padding:16px 40px;font-size:16px;font-weight:500;cursor:pointer;box-shadow:0 8px 32px #ff6b1a55;transition:transform .15s;margin-top:8px}
+.start-btn:active{transform:scale(.96)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:300px}
+.chip{background:var(--card);border:1px solid #3a2010;border-radius:20px;padding:5px 12px;font-size:11px;color:var(--muted)}
+#cooking{background:var(--bg);align-items:center;justify-content:space-between;padding:0}
+.cook-header{width:100%;display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--surface);border-bottom:1px solid #2a1a08;flex-shrink:0}
+.back-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.chef-av{width:36px;height:36px;background:var(--flame);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.chef-info{flex:1}
+.chef-name{font-size:14px;font-weight:500;color:var(--cream)}
+.chef-st{font-size:11px;color:var(--green)}
+.chef-st.busy{color:var(--gold)}
+.lang-badge{background:var(--card);border:1px solid #3a2010;border-radius:8px;padding:4px 9px;font-size:11px;color:var(--muted)}
+.messages{flex:1;width:100%;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.messages::-webkit-scrollbar{width:0}
+.msg{max-width:86%;padding:11px 14px;border-radius:var(--r);font-size:14px;line-height:1.6;animation:mi .22s ease}
+@keyframes mi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.msg.chef{background:var(--card);border:1px solid #3a2010;border-bottom-left-radius:4px;align-self:flex-start}
+.msg.chef .lbl{font-size:10px;color:var(--flame);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.msg.user{background:var(--flame);border-bottom-right-radius:4px;align-self:flex-end;color:#fff}
+.msg.rtl{direction:rtl;text-align:right}
+.typing-bubble{background:var(--card);border:1px solid #3a2010;border-radius:var(--r);border-bottom-left-radius:4px;padding:13px 16px;align-self:flex-start;display:none}
+.typing-bubble.on{display:block}
+.dots{display:flex;gap:5px}
+.dots span{width:7px;height:7px;background:var(--flame);border-radius:50%;animation:db 1.2s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.mic-area{width:100%;flex-shrink:0;background:var(--surface);border-top:1px solid #2a1a08;padding:20px 20px 36px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.mic-status{font-size:13px;color:var(--muted);text-align:center;min-height:18px}
+.mic-status.listening{color:var(--green)}
+.mic-status.speaking{color:var(--gold)}
+.big-mic{width:80px;height:80px;border-radius:50%;background:var(--flame);border:none;color:#fff;font-size:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px #ff6b1a55;transition:transform .15s,background .2s;position:relative}
+.big-mic.listening{background:var(--green);animation:pulse 1.5s ease-out infinite}
+.big-mic.speaking{background:var(--gold)}
+.big-mic.off{background:var(--muted);box-shadow:none;cursor:not-allowed}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #4caf7d66}70%{box-shadow:0 0 0 24px #4caf7d00}100%{box-shadow:0 0 0 0 #4caf7d00}}
+.big-mic:not(.off):active{transform:scale(.93)}
+.wave-vis{display:flex;gap:4px;align-items:center;height:32px}
+.wave-vis span{width:4px;background:var(--flame);border-radius:2px;animation:wv 1s ease-in-out infinite;height:8px}
+.wave-vis span:nth-child(1){animation-delay:0s}
+.wave-vis span:nth-child(2){animation-delay:.1s;height:20px}
+.wave-vis span:nth-child(3){animation-delay:.2s;height:28px}
+.wave-vis span:nth-child(4){animation-delay:.3s;height:20px}
+.wave-vis span:nth-child(5){animation-delay:.4s;height:12px}
+.wave-vis span:nth-child(6){animation-delay:.3s;height:20px}
+.wave-vis span:nth-child(7){animation-delay:.2s;height:28px}
+.wave-vis span:nth-child(8){animation-delay:.1s;height:20px}
+.wave-vis span:nth-child(9){animation-delay:0s;height:8px}
+@keyframes wv{0%,100%{transform:scaleY(.3);opacity:.4}50%{transform:scaleY(1);opacity:1}}
+.wave-vis.hidden{visibility:hidden}
+.text-fallback{width:100%;display:flex;gap:8px}
+.txt-in{flex:1;background:var(--card);border:1px solid #3a2010;border-radius:12px;padding:10px 13px;color:var(--cream);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.txt-in::placeholder{color:var(--muted)}
+.txt-in:focus{border-color:var(--flame)}
+.send-btn{width:42px;height:42px;background:var(--flame);border:none;border-radius:11px;color:#fff;font-size:17px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.send-btn:active{transform:scale(.93)}
+.stop-btn{background:var(--card);border:1px solid #3a2010;border-radius:10px;color:var(--red);font-size:12px;padding:7px 14px;cursor:pointer}
+.toast{position:fixed;bottom:160px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a0505;border:1px solid var(--red);color:#f08080;padding:9px 16px;border-radius:10px;font-size:12px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:300;max-width:290px;text-align:center;line-height:1.4}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div id="welcome" class="screen active">
+<div class="flame-icon">🔥</div>
+<div class="welcome-title">ChefVoice</div>
+<div class="welcome-sub">Your personal <strong>talking kitchen companion.</strong><br/>Hands free. Just speak — cook anything in the world.</div>
+<div class="field">
+<div class="field-label">🌍 Choose Your Language</div>
+<select class="sel" id="langSel">
+<option value="en|English|en-US|ltr">🇬🇧 English</option>
+<option value="hi|Hindi|hi-IN|ltr">🇮🇳 Hindi — हिंदी</option>
+<option value="ur|Urdu|ur-PK|rtl">🇵🇰 Urdu — اردو</option>
+<option value="ar|Arabic|ar-SA|rtl">🇸🇦 Arabic — العربية</option>
+<option value="bn|Bengali|bn-BD|ltr">🇧🇩 Bengali — বাংলা</option>
+<option value="ta|Tamil|ta-IN|ltr">🇮🇳 Tamil — தமிழ்</option>
+<option value="te|Telugu|te-IN|ltr">🇮🇳 Telugu — తెలుగు</option>
+<option value="mr|Marathi|mr-IN|ltr">🇮🇳 Marathi — मराठी</option>
+<option value="gu|Gujarati|gu-IN|ltr">🇮🇳 Gujarati — ગુજરાતી</option>
+<option value="pa|Punjabi|pa-IN|ltr">🇮🇳 Punjabi — ਪੰਜਾਬੀ</option>
+<option value="fr|French|fr-FR|ltr">🇫🇷 French — Français</option>
+<option value="es|Spanish|es-ES|ltr">🇪🇸 Spanish — Español</option>
+<option value="de|German|de-DE|ltr">🇩🇪 German — Deutsch</option>
+<option value="pt|Portuguese|pt-BR|ltr">🇧🇷 Portuguese — Português</option>
+<option value="ru|Russian|ru-RU|ltr">🇷🇺 Russian — Русский</option>
+<option value="zh|Chinese|zh-CN|ltr">🇨🇳 Chinese — 中文</option>
+<option value="ja|Japanese|ja-JP|ltr">🇯🇵 Japanese — 日本語</option>
+<option value="ko|Korean|ko-KR|ltr">🇰🇷 Korean — 한국어</option>
+<option value="id|Indonesian|id-ID|ltr">🇮🇩 Indonesian</option>
+<option value="tr|Turkish|tr-TR|ltr">🇹🇷 Turkish — Türkçe</option>
+<option value="sw|Swahili|sw-KE|ltr">🇰🇪 Swahili</option>
+<option value="ha|Hausa|ha-NG|ltr">🇳🇬 Hausa</option>
+<option value="yo|Yoruba|yo-NG|ltr">🇳🇬 Yoruba</option>
+<option value="ig|Igbo|ig-NG|ltr">🇳🇬 Igbo</option>
+<option value="fa|Persian|fa-IR|rtl">🇮🇷 Persian — فارسی</option>
+<option value="nl|Dutch|nl-NL|ltr">🇳🇱 Dutch — Nederlands</option>
+</select>
+</div>
+<div class="chips">
+<span class="chip">🍛 Biryani</span>
+<span class="chip">🥘 Jollof Rice</span>
+<span class="chip">🍜 Ramen</span>
+<span class="chip">🧆 Dal Makhani</span>
+<span class="chip">🥞 Pancakes</span>
+<span class="chip">🥙 Shawarma</span>
+<span class="chip">🍣 Sushi</span>
+<span class="chip">🫓 Garlic Bread</span>
+</div>
+<button class="start-btn" onclick="startCooking()">Start Cooking 🎙️</button>
+</div>
+
+<!-- COOKING -->
+<div id="cooking" class="screen">
+<div class="cook-header">
+<button class="back-btn" onclick="goHome()">←</button>
+<div class="chef-av">👨‍🍳</div>
+<div class="chef-info">
+<div class="chef-name">ChefVoice</div>
+<div class="chef-st" id="chefSt">Ready</div>
+</div>
+<div class="lang-badge" id="langBadge">🌍 EN</div>
+</div>
+<div class="messages" id="messages">
+<div class="typing-bubble" id="typingBubble">
+<div class="dots"><span></span><span></span><span></span></div>
+</div>
+</div>
+<div class="mic-area">
+<div class="wave-vis hidden" id="waveVis">
+<span></span><span></span><span></span><span></span><span></span>
+<span></span><span></span><span></span><span></span>
+</div>
+<button class="big-mic" id="bigMic" onclick="toggleMic()">🎙️</button>
+<div class="mic-status" id="micStatus">Tap mic to start talking</div>
+<div class="text-fallback">
+<input class="txt-in" id="txtIn" placeholder="Or type here…" onkeydown="handleKey(event)"/>
+<button class="send-btn" onclick="sendText()">➤</button>
+</div>
+<button class="stop-btn" onclick="stopSpeaking()">⏹ Stop Chef</button>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let lang='en',langName='English',langCode='en-US',langDir='ltr';
+let history=[];
+let isListening=false,isSpeaking=false;
+let recognition=null;
+let synth=window.speechSynthesis;
+let selectedVoice=null;
+let autoRestart=false;
+const RTL=['ar','ur','fa'];
+
+function loadVoices(){
+const voices=synth.getVoices();
+if(!voices.length)return;
+const priority=[
+v=>v.name==='Google UK English Female',
+v=>v.name==='Google UK English Male',
+v=>v.name.includes('Google US English'),
+v=>v.name==='Samantha',
+v=>v.name==='Daniel'&&v.lang.startsWith('en'),
+v=>v.lang==='en-GB',
+v=>v.lang==='en-US',
+v=>v.lang.startsWith('en'),
+];
+for(const fn of priority){const f=voices.find(fn);if(f){selectedVoice=f;break;}}
+}
+synth.onvoiceschanged=loadVoices;
+setTimeout(loadVoices,300);
+setTimeout(loadVoices,1000);
+
+function getVoiceForLang(){
+const voices=synth.getVoices();
+const prefix=langCode.split('-')[0];
+return voices.find(v=>v.lang===langCode)||voices.find(v=>v.lang.startsWith(prefix))||selectedVoice;
+}
+
+function startCooking(){
+const parts=document.getElementById('langSel').value.split('|');
+lang=parts[0];langName=parts[1];langCode=parts[2];langDir=parts[3];
+document.getElementById('langBadge').textContent='🌍 '+lang.toUpperCase();
+show('cooking');
+history=[];
+const greeting=getGreeting();
+history.push({role:'assistant',content:greeting});
+addChefMsg(greeting,true);
+}
+
+function goHome(){
+autoRestart=false;
+stopListening();
+stopSpeaking();
+history=[];
+document.getElementById('messages').innerHTML='<div class="typing-bubble" id="typingBubble"><div class="dots"><span></span><span></span><span></span></div></div>';
+document.getElementById('txtIn').value='';
+show('welcome');
+}
+
+function show(id){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+
+function getGreeting(){
+const g={
+en:"Hello! I am ChefVoice, your kitchen companion. What would you like to cook today?",
+hi:"नमस्ते! मैं ChefVoice हूँ। आज आप क्या बनाना चाहते हैं?",
+ur:"السلام علیکم! میں ChefVoice ہوں۔ آج آپ کیا پکانا چاہتے ہیں؟",
+ar:"مرحباً! أنا ChefVoice. ماذا تريد أن تطبخ اليوم؟",
+bn:"নমস্কার! আমি ChefVoice। আজ আপনি কী রান্না করতে চান?",
+ta:"வணக்கம்! நான் ChefVoice. இன்று என்ன சமைக்க விரும்புகிறீர்கள்?",
+te:"నమస్కారం! నేను ChefVoice. ఈరోజు మీరు ఏమి వండాలనుకుంటున్నారు?",
+mr:"नमस्कार! मी ChefVoice आहे. आज तुम्हाला काय बनवायचे आहे?",
+gu:"નમસ્તે! હું ChefVoice છું. આજે તમે શું બનાવવા ઈચ્છો છો?",
+pa:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ChefVoice ਹਾਂ। ਅੱਜ ਤੁਸੀਂ ਕੀ ਬਣਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+fr:"Bonjour! Je suis ChefVoice. Qu'aimeriez-vous cuisiner aujourd'hui?",
+es:"Hola! Soy ChefVoice. Que te gustaria cocinar hoy?",
+de:"Hallo! Ich bin ChefVoice. Was möchtest du heute kochen?",
+pt:"Ola! Eu sou ChefVoice. O que voce gostaria de cozinhar hoje?",
+ru:"Привет! Я ChefVoice. Что вы хотите приготовить сегодня?",
+zh:"你好！我是ChefVoice。今天你想做什么菜？",
+ja:"こんにちは！ChefVoiceです。今日は何を作りたいですか？",
+ko:"안녕하세요! 저는 ChefVoice입니다. 오늘 무엇을 요리하고 싶으세요?",
+id:"Halo! Saya ChefVoice. Hari ini Anda ingin memasak apa?",
+tr:"Merhaba! Ben ChefVoice. Bugün ne pişirmek istersiniz?",
+sw:"Habari! Mimi ni ChefVoice. Leo unataka kupika nini?",
+ha:"Sannu! Ni ne ChefVoice. Yau kana son dafa mene ne?",
+yo:"E kaaro! Mi ni ChefVoice. Ki ni o fe se loni?",
+ig:"Ndewo! Abu m ChefVoice. Gini ka i choro isi nri taa?",
+fa:"سلام! من ChefVoice هستم. امروز چه می‌خواهید بپزید؟",
+nl:"Hallo! Ik ben ChefVoice. Wat wil je vandaag koken?",
+};
+return g[lang]||g['en'];
+}
+
+function addChefMsg(text,thenListen=false){
+hideTyping();
+const msgs=document.getElementById('messages');
+const d=document.createElement('div');
+const isRTL=RTL.includes(lang);
+d.className='msg chef'+(isRTL?' rtl':'');
+d.innerHTML='<div class="lbl">Chef</div>'+esc(text);
+msgs.appendChild(d);
+scrollBot();
+speakText(text,thenListen);
+}
+
+function addUserMsg(text){
+const msgs=document.getElementById('messages');
+const d=document.createElement('div');
+const isRTL=RTL.includes(lang);
+d.className='msg user'+(isRTL?' rtl':'');
+d.textContent=text;
+msgs.appendChild(d);
+scrollBot();
+}
+
+function showTyping(){document.getElementById('typingBubble').classList.add('on');scrollBot()}
+function hideTyping(){document.getElementById('typingBubble').classList.remove('on')}
+function scrollBot(){const m=document.getElementById('messages');setTimeout(()=>m.scrollTop=m.scrollHeight,50)}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function speakText(text,thenListen=false){
+stopSpeaking();
+const clean=text.replace(/[*_#`]/g,'').replace(/[\u{1F300}-\u{1FFFF}]/gu,'').replace(/[\u2600-\u27BF]/g,'').trim();
+if(!clean){if(thenListen)startListening();return;}
+isSpeaking=true;
+setMicState('speaking');
+setStatus('Chef is speaking...','speaking');
+document.getElementById('waveVis').classList.remove('hidden');
+const voice=getVoiceForLang();
+const sentences=clean.match(/[^.!?؟।]+[.!?؟।]*/g)||[clean];
+let i=0;
+const next=()=>{
+if(i>=sentences.length){
+isSpeaking=false;
+document.getElementById('waveVis').classList.add('hidden');
+if(thenListen||autoRestart){setTimeout(()=>startListening(),400);}
+else{setMicState('idle');setStatus('Tap mic to talk');}
+return;
+}
+const chunk=sentences[i++].trim();
+if(!chunk){next();return;}
+const utt=new SpeechSynthesisUtterance(chunk);
+if(voice)utt.voice=voice;
+utt.rate=0.88;utt.pitch=1.0;utt.volume=1.0;
+utt.onend=next;utt.onerror=next;
+synth.speak(utt);
+};
+next();
+}
+
+function stopSpeaking(){
+synth.cancel();
+isSpeaking=false;
+document.getElementById('waveVis').classList.add('hidden');
+setMicState('idle');
+setStatus('Tap mic to talk');
+}
+
+function toggleMic(){
+if(document.getElementById('bigMic').classList.contains('off'))return;
+if(isListening){autoRestart=false;stopListening();}
+else{autoRestart=true;startListening();}
+}
+
+async function startListening(){
+if(isSpeaking)return;
+try{await navigator.mediaDevices.getUserMedia({audio:true});}
+catch(e){
+document.getElementById('bigMic').classList.add('off');
+setStatus('Mic blocked — please type below');
+showToast('Mic not allowed. Please type your message, or allow mic in browser settings and refresh.');
+return;
+}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){setStatus('Voice not supported — please type');return;}
+recognition=new SR();
+recognition.continuous=false;
+recognition.interimResults=true;
+recognition.lang=langCode;
+recognition.onstart=()=>{isListening=true;setMicState('listening');setStatus('Listening... speak now','listening');};
+let finalTranscript='';
+recognition.onresult=(e)=>{
+finalTranscript='';
+for(let i=e.resultIndex;i<e.results.length;i++)finalTranscript+=e.results[i][0].transcript;
+document.getElementById('txtIn').value=finalTranscript;
+};
+recognition.onend=()=>{
+isListening=false;
+const txt=finalTranscript.trim();
+finalTranscript='';
+document.getElementById('txtIn').value='';
+if(txt){addUserMsg(txt);history.push({role:'user',content:txt});callAI();}
+else if(autoRestart&&!isSpeaking){setTimeout(()=>startListening(),300);}
+else{setMicState('idle');setStatus('Tap mic to talk');}
+};
+recognition.onerror=(e)=>{
+isListening=false;
+if(e.error==='not-allowed'){
+document.getElementById('bigMic').classList.add('off');
+setStatus('Mic blocked — please type below');
+showToast('Allow microphone in browser settings then refresh.');
+autoRestart=false;
+}else if(e.error==='no-speech'&&autoRestart){setTimeout(()=>startListening(),300);}
+else if(e.error!=='no-speech'){setMicState('idle');setStatus('Tap mic to try again');}
+};
+try{recognition.start();}catch(e){setMicState('idle');setStatus('Tap mic to talk');}
+}
+
+function stopListening(){
+try{recognition?.stop();}catch(e){}
+isListening=false;
+setMicState('idle');
+setStatus('Tap mic to talk');
+}
+
+function sendText(){
+const inp=document.getElementById('txtIn');
+const txt=inp.value.trim();
+if(!txt)return;
+inp.value='';
+stopListening();
+addUserMsg(txt);
+history.push({role:'user',content:txt});
+callAI();
+}
+
+function handleKey(e){if(e.key==='Enter'){e.preventDefault();sendText();}}
+
+async function callAI(){
+showTyping();
+setStatus('Chef is thinking...','busy');
+setMicState('idle');
+try{
+const res=await fetch('/api/chat',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({messages:history,language:lang,languageName:langName})
+});
+if(!res.ok)throw new Error('API error '+res.status);
+const data=await res.json();
+const reply=data.reply||"Sorry, please try again!";
+history.push({role:'assistant',content:reply});
+addChefMsg(reply,true);
+}catch(e){
+hideTyping();
+setStatus('Error — tap mic to try again');
+setMicState('idle');
+showToast('Connection error. Please try again.');
+console.error(e);
+}
+}
+
+function setMicState(state){
+const btn=document.getElementById('bigMic');
+btn.classList.remove('listening','speaking','off');
+if(state==='listening'){btn.classList.add('listening');btn.textContent='🎤';}
+else if(state==='speaking'){btn.classList.add('speaking');btn.textContent='🔊';}
+else{btn.textContent='🎙️';}
+}
+
+function setStatus(text,type=''){
+const el=document.getElementById('chefSt');
+el.textContent=text;
+el.className='chef-st'+(type?' '+type:'');
+const ms=document.getElementById('micStatus');
+ms.textContent=text;
+ms.className='mic-status'+(type==='listening'?' listening':type==='speaking'?' speaking':'');
+}
+
+function showToast(msg){
+const t=document.getElementById('toast');
+t.textContent=msg;
+t.classList.add('show');
+setTimeout(()=>t.classList.remove('show'),4500);
+}
+</script>
+</body>
+</html>
+
