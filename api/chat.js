@@ -17,7 +17,7 @@ headers: {
 },
 body: JSON.stringify({
 model: 'llama-3.3-70b-versatile',
-max_tokens: 150,
+max_tokens: 350,
 messages: [
 {
 role: 'system',
